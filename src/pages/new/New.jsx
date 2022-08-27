@@ -14,7 +14,8 @@ import { auth, db, storage } from "../../firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-
+import { UserAddPopUp } from "../../components/userAddPopUp/UserAddPopUp";
+import { useNavigate } from "react-router-dom";
 export const New = ({ inputs, title }) => {
   // To upload Image
   const [file, setFile] = useState("");
@@ -24,6 +25,8 @@ export const New = ({ inputs, title }) => {
 
   //
   const [percentage, setPercentage] = useState(null);
+
+  const navigate = useNavigate();
 
   // this is to upload the image immediately to the storage after selecting the image
   useEffect(() => {
@@ -91,6 +94,13 @@ export const New = ({ inputs, title }) => {
 
   const handleAdd = async (e) => {
     e.preventDefault();
+    if (title === "Add New User") {
+      handleAddUser();
+    } else {
+      handleAddProduct();
+    }
+  };
+  const handleAddUser = async (e) => {
     try {
       // "data.email and data.password" are used since "data" above is the state managing inputs
       const res = await createUserWithEmailAndPassword(
@@ -103,9 +113,23 @@ export const New = ({ inputs, title }) => {
         ...data,
         timestamp: serverTimestamp(),
       });
-      console.log(res.id);
+      // To navigate to previous page
+      navigate(-1);
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  const handleAddProduct = async (e) => {
+    try {
+      await addDoc(collection(db, "products"), {
+        ...data,
+        timestamp: serverTimestamp(),
+      });
+      navigate(-1);
+      console.log("I");
+    } catch (error) {
+      console.log(error);
     }
   };
   return (
@@ -113,6 +137,7 @@ export const New = ({ inputs, title }) => {
       <Sidebar />
       <div className="newContainer">
         <Navbar />
+        {/* <UserAddPopUp /> */}
         <div className="top">
           <h1 className="title">{title}</h1>
         </div>

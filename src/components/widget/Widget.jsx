@@ -1,16 +1,18 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "./widget.scss";
 import KeyboardArrowUpOutlinedIcon from "@mui/icons-material/KeyboardArrowUpOutlined";
+import KeyboardArrowDownOutlinedIcon from "@mui/icons-material/KeyboardArrowDownOutlined";
 import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import MonetizationOnOutlinedIcon from "@mui/icons-material/MonetizationOnOutlined";
 import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../../firebase";
 
 export const Widget = ({ type }) => {
+  const [amount, setAmount] = useState(null);
+  const [percentage, setPercentage] = useState(null);
   let data;
-  //temporary
-  const amount = 100;
-  const percentage = 20;
 
   switch (type) {
     case "user":
@@ -18,6 +20,7 @@ export const Widget = ({ type }) => {
         title: "USERS",
         isMoney: false,
         link: "See all users",
+        query: "users",
         icon: (
           <PersonOutlineOutlinedIcon
             className="icon"
@@ -31,6 +34,8 @@ export const Widget = ({ type }) => {
         title: "ORDERS",
         isMoney: false,
         link: "View all orders",
+        query: "orders",
+
         icon: (
           <ShoppingCartOutlinedIcon
             className="icon"
@@ -47,6 +52,8 @@ export const Widget = ({ type }) => {
         title: "EARNINGS",
         isMoney: true,
         link: "view all earnings",
+        query: "earnings",
+
         icon: (
           <MonetizationOnOutlinedIcon
             className="icon"
@@ -55,11 +62,12 @@ export const Widget = ({ type }) => {
         ),
       };
       break;
-    case "balance":
+    case "product":
       data = {
-        title: "MY BALANCE",
-        isMoney: true,
+        title: "PRODUCTS",
         link: "See details",
+        query: "products",
+
         icon: (
           <AccountBalanceWalletOutlinedIcon
             className="icon"
@@ -75,6 +83,41 @@ export const Widget = ({ type }) => {
       break;
   }
 
+  useEffect(() => {
+    const fetchData = async () => {
+      const today = new Date();
+      const lastMonth = new Date(new Date().setMonth(today.getMonth() - 1));
+      // 2 months ago
+      const prevMonth = new Date(new Date().setMonth(today.getMonth() - 2));
+
+      const lastMonthQuery = query(
+        collection(db, data.query),
+        where("timestamp", "<=", today),
+        where("timestamp", ">", lastMonth)
+      );
+      const prevMonthQuery = query(
+        collection(db, data.query),
+        where("timestamp", "<=", lastMonth),
+        where("timestamp", ">", prevMonth)
+      );
+
+      const lastMonthData = await getDocs(lastMonthQuery);
+      const prevMonthData = await getDocs(prevMonthQuery);
+
+      // to get the number of users
+      setAmount(lastMonthData.docs.length);
+      const percent =
+        ((lastMonthData.docs.length - prevMonthData.docs.length) /
+          (prevMonthData.docs.length ? prevMonthData.docs.length : 1)) *
+        100;
+      setPercentage(percent.toFixed(0));
+
+      console.log(lastMonthData.docs.length, prevMonthData.docs.length);
+    };
+
+    fetchData();
+  }, []);
+
   return (
     <div className="widget">
       <div className="left">
@@ -85,8 +128,15 @@ export const Widget = ({ type }) => {
         <span className="link">{data.link}</span>
       </div>
       <div className="right">
-        <div className="percentage positive ">
-          <KeyboardArrowUpOutlinedIcon /> {percentage}%
+        <div
+          className={`percentage ${percentage < 0 ? "negative" : "positive"}`}
+        >
+          {percentage < 0 ? (
+            <KeyboardArrowDownOutlinedIcon />
+          ) : (
+            <KeyboardArrowUpOutlinedIcon />
+          )}
+          {percentage}%
         </div>
         {data.icon}
       </div>

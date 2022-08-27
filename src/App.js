@@ -10,6 +10,7 @@ import { useState } from "react";
 import { useContext } from "react";
 import { DarkModeContext } from "./context/darkModeContext";
 import { AuthContext } from "./context/AuthContext";
+import { productColumns, userColumns } from "./datatablesource";
 
 function App() {
   const { darkMode } = useContext(DarkModeContext);
@@ -42,7 +43,11 @@ function App() {
                 index
                 element={
                   <RequireAuth>
-                    <List />
+                    <List
+                      lists={userColumns}
+                      title="Add New User"
+                      type="users"
+                    />
                   </RequireAuth>
                 }
               />
@@ -68,7 +73,11 @@ function App() {
                 index
                 element={
                   <RequireAuth>
-                    <List />
+                    <List
+                      lists={productColumns}
+                      title="Add New Product"
+                      type="products"
+                    />
                   </RequireAuth>
                 }
               />
